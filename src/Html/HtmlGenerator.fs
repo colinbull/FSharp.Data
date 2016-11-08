@@ -60,10 +60,7 @@ module internal HtmlGenerator =
         for field in fields do
             rowType.AddMember field.ProvidedProperty
         
-        let rawDataAccessor = 
-            bindingContext.ProvidedProperty("AsTuple", rowErasedType, getterCode = fun (Singleton row) -> row)
 
-        rowType.AddMember rawDataAccessor
 
         let tableErasedWithRowErasedType = typedefof<HtmlTable<_>>.MakeGenericType(rowErasedType)
         let tableErasedTypeWithGeneratedRow = typedefof<HtmlTable<_>>.MakeGenericType(rowType)
@@ -81,6 +78,11 @@ module internal HtmlGenerator =
         
             Expr.NewDelegate(delegateType, [rowVar], body)
         
+        let rawDataAccessor = 
+            bindingContext.ProvidedProperty("AsTuple", rowType, getterCode = fun (Singleton row) -> row )
+
+        rowType.AddMember rawDataAccessor
+
         let create (htmlDoc:Expr) =
             let rowConverterVar = Var("rowConverter", rowConverter.Type)
             let body = tableErasedWithRowErasedType?Create () (Expr.Var rowConverterVar, htmlDoc, table.Name, table.HasHeaders.Value)
